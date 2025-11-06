@@ -1,29 +1,12 @@
-/****************************************************************************
- Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
- 
- http://www.cocos2d-x.org
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
- ****************************************************************************/
 
 #include "HelloWorldScene.h"
 #include "SimpleAudioEngine.h"
+#include "configs/loaders/LevelConfigLoader.h"
+#include "configs/models/CardResConfig.h"
+#include "views/CardView.h"
+#include "models/GameModel.h"
+#include "views/GameView.h"
+#include "services/GameModelFromLevelGenerator.h"
 
 USING_NS_CC;
 
@@ -86,35 +69,41 @@ bool HelloWorld::init()
     // add a label shows "Hello World"
     // create and initialize a label
 
-    auto label = Label::createWithTTF("Hello World", "fonts/Marker Felt.ttf", 24);
-    if (label == nullptr)
+    // ----------- 顶部区域 -----------
     {
-        problemLoading("'fonts/Marker Felt.ttf'");
-    }
-    else
-    {
-        // position the label on the center of the screen
-        label->setPosition(Vec2(origin.x + visibleSize.width/2,
-                                origin.y + visibleSize.height - label->getContentSize().height));
+        float topHeight = visibleSize.height * (2.0f / 3.0f);   // 上半区占 2/3 屏幕
+        Color4B topColor(255, 215, 0, 255);                     // 金色
 
-        // add the label as a child to this layer
-        this->addChild(label, 1);
+        auto* topLayer = LayerColor::create(topColor, visibleSize.width, topHeight);
+        if (topLayer) {
+            // 设置顶部位置（从下往上 1/3 处开始）
+            topLayer->setPosition(Vec2(0.0f, visibleSize.height - topHeight));
+            this->addChild(topLayer, 0); // zOrder = 0
+        }
+        else {
+            CCLOG(u8"[警告] 顶部颜色层创建失败！");
+        }
     }
 
-    // add "HelloWorld" splash screen"
-    auto sprite = Sprite::create("HelloWorld.png");
-    if (sprite == nullptr)
+    // ----------- 底部区域 -----------
     {
-        problemLoading("'HelloWorld.png'");
-    }
-    else
-    {
-        // position the sprite on the center of the screen
-        sprite->setPosition(Vec2(visibleSize.width/2 + origin.x, visibleSize.height/2 + origin.y));
+        float bottomHeight = visibleSize.height / 3.0f;         // 下半区占 1/3 屏幕
+        Color4B bottomColor(0, 0, 255, 155);                    // 半透明蓝色
 
-        // add the sprite as a child to this layer
-        this->addChild(sprite, 0);
+        auto* bottomLayer = LayerColor::create(bottomColor, visibleSize.width, bottomHeight);
+        if (bottomLayer) {
+            bottomLayer->setPosition(Vec2::ZERO);               // 左下角对齐
+            this->addChild(bottomLayer, 0);
+        }
+        else {
+            CCLOG(u8"[警告] 底部颜色层创建失败！");
+        }
     }
+
+    // 游戏模型与视图生成
+    auto gameModel = GameModelFromLevelGenerator::generateGameModel("level_1.json");
+    GameModelFromLevelGenerator::generateGameView(gameModel, this);
+
     return true;
 }
 
