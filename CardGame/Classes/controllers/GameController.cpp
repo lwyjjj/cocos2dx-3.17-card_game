@@ -98,8 +98,17 @@ void GameController::handleCardClicked(CardModel& card) {
     }
     card.setZone(CardZone::Hand);
     card.setPosition(kHandPosition);
-    auto moveTo = MoveTo::create(kCardMoveDuration, kHandPosition);
-    cardManager->getView()->runAction(moveTo);
+    const float duration = 0.5f;              // 动画持续时间
+    const float jumpHeight = 60.0f;           // 跳跃的高度，可以根据喜好调整
+    const float rotationDegrees = 360.0f;     // 旋转角度，360度为一整圈
+    // 创建跳跃动作 (JumpTo)
+    auto jumpToAction = cocos2d::JumpTo::create(duration, kHandPosition, jumpHeight, 1);
+    // 创建旋转动作 (RotateBy)
+    auto rotateAction = cocos2d::RotateBy::create(duration, rotationDegrees);
+    // 使用 Spawn 将跳跃和旋转组合起来，使它们同时执行
+    auto combinedAction = cocos2d::Spawn::create(jumpToAction, rotateAction, nullptr);
+    // 让卡牌视图执行这个组合后的动作
+    cardManager->getView()->runAction(combinedAction);
     int newZOrder = 1;
     if (_undoManager.getUndoSize() > 0) {
         CardModel lastCard = getBottomCard();
